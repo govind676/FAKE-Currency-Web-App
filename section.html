@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Actions</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+      background-image: url('images/detection.jpg');
+    }
+    .container {
+      text-align: center;
+    }
+    .button-box {
+      width: 200px;
+      height: 100px;
+      margin: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: black;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+    .button-box:hover {
+      background-color: rgb(22, 159, 31);
+      transform: translateY(-5px);
+    }
+    .hidden-input {
+      display: none;
+    }
+    #clickButton {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #FF5722;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #clickButton:hover {
+      background-color: #e64a19;
+    }
+    video {
+      display: none;
+      margin-top: 20px;
+      width: 320px;
+      height: 240px;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+    }
+    #submitbutton {
+      background-color: black;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #submitbutton:hover {
+      background-color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="button-box" onclick="document.getElementById('uploadInput').click();">
+      Upload Image
+      <input type="file" id="uploadInput" class="hidden-input" accept="image/*" onchange="displayUploadedImage(event)">
+    </div>
+    <div class="button-box" onclick="openCamera()">
+      Capture Image
+    </div>
+    <video id="cameraFeed" autoplay></video>
+    <button id="clickButton" onclick="captureImage()">Click</button>
+  </div>
+
+  <script>
+    let capturedImageData = null;
+
+    // Handle image upload
+    function displayUploadedImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const newWindow = window.open('', '_blank');
+          newWindow.document.write(`
+            <div style="text-align: center;">
+              <img src="${e.target.result}" alt="Uploaded Image" style="max-width: 300px; max-height: 300px; border: 2px solid black; border-radius: 5px;">
+              <button id="submitbutton" onclick="alert('Your image is uploaded!')">Submit</button>
+            </div>
+          `);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Open the camera
+    function openCamera() {
+      const video = document.getElementById('cameraFeed');
+      const clickButton = document.getElementById('clickButton');
+
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          video.style.display = 'block';
+          clickButton.style.display = 'inline-block';
+          video.srcObject = stream;
+        })
+        .catch((error) => {
+          console.error('Error accessing the camera:', error);
+          alert('Could not access the camera. Please check your device settings.');
+        });
+    }
+
+    // Capture the image
+    function captureImage() {
+      const video = document.getElementById('cameraFeed');
+      const canvas = document.createElement('canvas');
+      const clickButton = document.getElementById('clickButton');
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      capturedImageData = canvas.toDataURL('image/png');
+      
+      // Stop the video stream
+      const stream = video.srcObject;
+      const tracks = stream.getTracks();
+      tracks.forEach(track => track.stop());
+
+      // Hide the video and button
+      video.style.display = 'none';
+      clickButton.style.display = 'none';
+
+      // Open new window with the captured image
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(`
+        <div style="text-align: center;">
+          <img src="${capturedImageData}" alt="Captured Image" style="max-width: 300px; max-height: 300px; border: 2px solid black; border-radius: 5px;">
+          <button id="submitbutton" onclick="alert('Your image is uploaded!')">Submit</button>
+        </div>
+      `);
+    }
+  </script>
+</body>
+</html>
